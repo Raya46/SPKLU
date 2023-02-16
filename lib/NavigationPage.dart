@@ -123,7 +123,7 @@ class _NavigationPageState extends State<NavigationPage> {
           final screenWidth = MediaQuery.of(context).size.width;
           // ignore: avoid_unnecessary_containers
           return SizedBox(
-            height: screenHeight / 5.5,
+            height: screenHeight / 5,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,

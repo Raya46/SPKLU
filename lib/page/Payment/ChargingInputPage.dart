@@ -335,46 +335,25 @@ class _ChargingInputScreenState extends State<ChargingInputScreen> {
 
   AppBar appbarApk(BuildContext context) {
     return AppBar(
-        leading: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
+      leading: BackButton(
+        color: Color.fromRGBO(247, 247, 248, 1),
+        onPressed: () {
+          Navigator.push(
               context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    // ignore: prefer_const_constructors
-                    NavigationPage(),
-                transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-                  return SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(-1.0, 0.0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
-                  );
-                },
-                transitionDuration: const Duration(milliseconds: 500),
-              ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-          ),
-          child: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ),
-        ),
-        elevation: 0,
-        bottomOpacity: 0,
-        toolbarHeight: 70,
-        centerTitle: true,
-        backgroundColor: Colors.blue,
-        title: const Text(
-          "Charging Input",
-          style: TextStyle(color: Color.fromRGBO(247, 247, 248, 1)),
-        ),
-      );
+              MaterialPageRoute(
+                builder: (context) => const NavigationPage(),
+              ));
+        },
+      ),
+      elevation: 1,
+      bottomOpacity: 1,
+      toolbarHeight: 70,
+      centerTitle: true,
+      backgroundColor: bluee,
+      title: const Text(
+        "Location",
+        style: TextStyle(color: Color.fromRGBO(247, 247, 248, 1)),
+      ),
+    );
   }
 }
