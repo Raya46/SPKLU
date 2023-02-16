@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -16,6 +16,18 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return const LoginPage();
+    // ignore: prefer_const_constructors
+    return MaterialApp(
+      theme:  ThemeData(
+        primaryColor: Colors.white,
+        // Add the line below to get horizontal sliding transitions for routes.
+        pageTransitionsTheme: const PageTransitionsTheme(builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        }),
+      ),
+      debugShowCheckedModeBanner: false,
+      home: const Scaffold(body: LoginPage()),
+    );
+    // return const LoginPage();
   }
 }

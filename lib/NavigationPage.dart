@@ -3,6 +3,7 @@ import 'package:flutetr_spklu/page/Payment/ConfirmPage.dart';
 import 'package:flutetr_spklu/page/Feature/HistoryPage.dart';
 import 'package:flutetr_spklu/page/Main/ProfilePage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'page/Main/DashboardPage.dart';
 
@@ -106,6 +107,8 @@ class _NavigationPageState extends State<NavigationPage> {
       ),
     );
   }
+
+  Future hideBar() async => SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.top]);
 
   Future<dynamic> modalBottomSheet(BuildContext context) {
     return showModalBottomSheet(

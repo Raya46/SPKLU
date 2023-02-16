@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
@@ -59,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(15),
                       ),
                       child: Column(
+                        // ignore: prefer_const_literals_to_create_immutables
                         children: <Widget>[
                           SizedBox(
                             height: 17,
