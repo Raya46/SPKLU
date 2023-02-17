@@ -1,4 +1,9 @@
+// ignore_for_file: prefer_const_constructors
+
+import 'package:flutetr_spklu/Scanner.dart';
 import 'package:flutetr_spklu/page/LoginPage/LoginPage.dart';
+import 'package:flutetr_spklu/page/Payment/ChargingInputPage.dart';
+import 'package:flutetr_spklu/tester.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 
@@ -18,7 +23,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     // ignore: prefer_const_constructors
     return MaterialApp(
-      theme:  ThemeData(
+      theme: ThemeData(
         primaryColor: Colors.white,
         // Add the line below to get horizontal sliding transitions for routes.
         pageTransitionsTheme: const PageTransitionsTheme(builders: {
@@ -26,7 +31,7 @@ class _MyAppState extends State<MyApp> {
         }),
       ),
       debugShowCheckedModeBanner: false,
-      home: const Scaffold(body: LoginPage()),
+      home: ChargingInputPage(),
     );
     // return const LoginPage();
   }

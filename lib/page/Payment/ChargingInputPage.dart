@@ -5,6 +5,7 @@ import 'package:flutetr_spklu/page/Main/DashboardPage.dart';
 import 'package:flutetr_spklu/page/Payment/ConfirmPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 
 void main() {
   runApp(const ChargingInputPage());
@@ -32,6 +33,7 @@ class ChargingInputScreen extends StatefulWidget {
 class _ChargingInputScreenState extends State<ChargingInputScreen> {
   final nominalKWH = TextEditingController();
   String estimasiBiaya = "0";
+  String _scanBarcode = 'Unknown';
 
   @override
   void initState() {
@@ -46,6 +48,33 @@ class _ChargingInputScreenState extends State<ChargingInputScreen> {
               .replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.');
         }
       });
+    });
+  }
+
+  Future<void> scanQR() async {
+    String barcodeScanRes;
+    // Platform messages may fail, so we use a try/catch PlatformException.
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.QR);
+      print(barcodeScanRes);
+      // ignore: use_build_context_synchronously
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context ) => const ConfirmPage(),
+          ));
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version.';
+    }
+
+    // If the widget was removed from the tree while the asynchronous platform
+    // message was in flight, we want to discard the reply rather than calling
+    // setState to update our non-existent appearance.
+    if (!mounted) return ;
+
+    setState(() {
+      _scanBarcode = barcodeScanRes;
     });
   }
 
@@ -318,10 +347,7 @@ class _ChargingInputScreenState extends State<ChargingInputScreen> {
                     primary: const Color.fromRGBO(0, 125, 251, 1),
                   ),
                   onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const ConfirmPage()));
+                    scanQR();
                   },
                   child: const Text('Next', style: TextStyle(fontSize: 16)),
                 ),
