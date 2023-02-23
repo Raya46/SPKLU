@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../NavigationPage.dart';
 import 'package:http/http.dart' as http;
+import 'package:localstorage/localstorage.dart';
 
 void main() {
   runApp(LoginPage());
@@ -31,6 +32,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final LocalStorage storage = new LocalStorage('localstorage_app');
   final _formKey = GlobalKey<FormState>();
   String? _email, _password;
 
@@ -217,15 +219,23 @@ class _LoginScreenState extends State<LoginScreen> {
         var results = jsonDecode(response.body);
         print(response.body);
         if (results["success"] == true) {
-          // ignore: use_build_context_synchronously
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) {
-              return NavigationPage();
-            }),
-          );
+          if (results["user"]["active"] == "1") {
+            storage.setItem('id', results["user"]["id"]);
+            storage.setItem('api_token', results["user"]["api_token"]);
+            // ignore: use_build_context_synchronously
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) {
+                return NavigationPage();
+              }),
+            );
+          } else {
+            showCupertinoAlertDialog(context, "Alert!",
+                "Your account is not active, please contact the administrator");
+          }
         } else {
-          showCupertinoAlertDialog(context);
+          showCupertinoAlertDialog(context, "Alert!",
+              "Your username or password is wrong. Please check again!");
         }
       } catch (e) {
         print(e);
@@ -234,7 +244,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-void showCupertinoAlertDialog(BuildContext context) {
+void showCupertinoAlertDialog(BuildContext context, title, content) {
   // membuat button untuk menutup dialog
   Widget okButton = CupertinoDialogAction(
     child: Text("OK"),
@@ -245,8 +255,8 @@ void showCupertinoAlertDialog(BuildContext context) {
 
   // membuat alert dialog
   CupertinoAlertDialog alert = CupertinoAlertDialog(
-    title: Text("Kesalahan"),
-    content: Text("Username atau password anda salah !"),
+    title: Text(title),
+    content: Text(content),
     actions: [
       okButton,
     ],

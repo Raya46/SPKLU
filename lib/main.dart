@@ -1,6 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 
-import 'package:flutetr_spklu/Scanner.dart';
+import 'package:flutetr_spklu/page/Feature/Scanner.dart';
 import 'package:flutetr_spklu/page/LoginPage/LoginPage.dart';
 import 'package:flutetr_spklu/page/Payment/ChargingInputPage.dart';
 import 'package:flutetr_spklu/tester.dart';
@@ -31,7 +31,7 @@ class _MyAppState extends State<MyApp> {
         }),
       ),
       debugShowCheckedModeBanner: false,
-      home: ChargingInputPage(),
+      home: LoginPage(),
     );
     // return const LoginPage();
   }

@@ -1,9 +1,11 @@
+import 'package:flutetr_spklu/page/Feature/Scanner.dart';
 import 'package:flutetr_spklu/page/Payment/ChargingInputPage.dart';
 import 'package:flutetr_spklu/page/Payment/ConfirmPage.dart';
 import 'package:flutetr_spklu/page/Feature/HistoryPage.dart';
 import 'package:flutetr_spklu/page/Main/ProfilePage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'page/Main/DashboardPage.dart';
 
@@ -20,10 +22,43 @@ class _NavigationPageState extends State<NavigationPage> {
     // const HomePage(),
     const DashboardPage(),
     const HistoryPage(),
-    const ChargingInputPage(),
     // const ConfirmPage(),
     const ProfilePage(),
   ];
+  String scanBarcode = '';
+   //Barcode
+  Future<void> scanQR() async {
+    String barcodeScanRes;
+    // Platform messages may fail, so we use a try/catch PlatformException.
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'cancel', true, ScanMode.QR);
+      print(barcodeScanRes);
+      if (barcodeScanRes == '-1') {
+        // ignore: use_build_context_synchronously
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const NavigationPage(),
+            ));
+      } else {
+        // ignore: use_build_context_synchronously
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>  ChargingInputPage(scanBarcode: scanBarcode, )),
+            );
+      }
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version.';
+    }
+    if (!mounted) return;
+
+    setState(() {
+      scanBarcode = barcodeScanRes;
+    });
+  }
+  
 
   final PageStorageBucket bucket = PageStorageBucket();
   Widget currentScreen = const DashboardPage();
@@ -108,7 +143,8 @@ class _NavigationPageState extends State<NavigationPage> {
     );
   }
 
-  Future hideBar() async => SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.top]);
+  Future hideBar() async =>
+      SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.top]);
 
   Future<dynamic> modalBottomSheet(BuildContext context) {
     return showModalBottomSheet(
@@ -126,7 +162,7 @@ class _NavigationPageState extends State<NavigationPage> {
           final screenWidth = MediaQuery.of(context).size.width;
           // ignore: avoid_unnecessary_containers
           return SizedBox(
-            height: screenHeight / 5,
+            height: screenHeight / 4.5,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,
@@ -142,23 +178,16 @@ class _NavigationPageState extends State<NavigationPage> {
                 Container(
                   margin: const EdgeInsets.all(18.0),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        height: 50,
+                        height: 60,
                         child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                                 primary: Colors.transparent,
                                 onPrimary: black,
                                 elevation: 0),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ChargingInputPage()),
-                              );
-                            },
+                            onPressed: (() => scanQR()),
                             child: Row(
                               children: [
                                 Container(
@@ -177,7 +206,7 @@ class _NavigationPageState extends State<NavigationPage> {
                             )),
                       ),
                       SizedBox(
-                        height: 50,
+                        height: 60,
                         child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                                 primary: Colors.transparent,

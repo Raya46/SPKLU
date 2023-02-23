@@ -1,20 +1,33 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutetr_spklu/global/color.dart';
+import 'package:flutetr_spklu/page/Payment/StatusPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ConfirmPage extends StatefulWidget {
-  const ConfirmPage({super.key});
+  const ConfirmPage({
+    Key? key,
+    required this.estimasiBiaya,
+  }) : super(key: key);
+
+  final String estimasiBiaya;
 
   @override
-  State<ConfirmPage> createState() => _ConfirmPageState();
+  State<ConfirmPage> createState() =>
+      _ConfirmPageState(estimasiBiaya: estimasiBiaya);
 }
 
 class _ConfirmPageState extends State<ConfirmPage> {
+   _ConfirmPageState({
+    required this.estimasiBiaya,
+  }) : super();
+
+  final String estimasiBiaya;
+
   @override
   Widget build(BuildContext context) {
-  
     return LayoutBuilder(builder: (context, constraints) {
       final height = constraints.maxHeight;
       final width = constraints.maxWidth;
@@ -27,9 +40,11 @@ class _ConfirmPageState extends State<ConfirmPage> {
           toolbarHeight: 70,
           centerTitle: true,
           backgroundColor: blue,
-          title: const Text(
+          title: Text(
             "Cost Details",
-            style: TextStyle(color: Color.fromRGBO(247, 247, 248, 1)),
+            style: GoogleFonts.inter(
+                color: Color.fromRGBO(247, 247, 248, 1),
+                fontWeight: FontWeight.bold),
           ),
         ),
         body: Container(
@@ -56,6 +71,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            // ignore: prefer_const_literals_to_create_immutables
                             children: [
                               const Text(
                                 'Total Estimated cost',
@@ -64,9 +80,9 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                     fontWeight: FontWeight.w500,
                                     fontSize: 14),
                               ),
-                              const Text(
-                                'Rp 80.311',
-                                style: TextStyle(
+                              Text(
+                                'Rp $estimasiBiaya ',
+                                style: GoogleFonts.inter(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
                                     fontSize: 30),
@@ -279,30 +295,35 @@ class _ConfirmPageState extends State<ConfirmPage> {
                           ),
                           child: Text("Next"),
                           onPressed: () {
-                            AwesomeDialog(
-                              context: context,
-                              dialogType: DialogType.warning,
-                              width: width,
-                              buttonsBorderRadius: const BorderRadius.all(
-                                Radius.circular(2),
-                              ),
-                              dismissOnTouchOutside: false,
-                              dismissOnBackKeyPress: true,
-                              onDismissCallback: (type) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Dismissed by $type'),
-                                  ),
-                                );
-                              },
-                              headerAnimationLoop: false,
-                              animType: AnimType.bottomSlide,
-                              title: 'INFO',
-                              desc:
-                                  'This Dialog can be dismissed touching outside',
-                              // showCloseIcon: true,
-                              btnCancelOnPress: () {},
-                            ).show();
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => StatusPage(),
+                                ));
+                            // AwesomeDialog(
+                            //   context: context,
+                            //   dialogType: DialogType.warning,
+                            //   width: width,
+                            //   buttonsBorderRadius: const BorderRadius.all(
+                            //     Radius.circular(2),
+                            //   ),
+                            //   dismissOnTouchOutside: false,
+                            //   dismissOnBackKeyPress: true,
+                            //   onDismissCallback: (type) {
+                            //     ScaffoldMessenger.of(context).showSnackBar(
+                            //       SnackBar(
+                            //         content: Text('Dismissed by $type'),
+                            //       ),
+                            //     );
+                            //   },
+                            //   headerAnimationLoop: false,
+                            //   animType: AnimType.bottomSlide,
+                            //   title: 'INFO',
+                            //   desc:
+                            //       'This Dialog can be dismissed touching outside',
+                            //   // showCloseIcon: true,
+                            //   btnCancelOnPress: () {},
+                            // ).show();
                           },
                         ),
                         //     AnimatedButton(
