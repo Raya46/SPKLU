@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutetr_spklu/global/color.dart';
 import 'package:flutetr_spklu/page/Payment/StatusPage.dart';
@@ -5,26 +8,195 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'package:localstorage/localstorage.dart';
+import 'package:intl/intl.dart';
+import 'package:mqtt_client/mqtt_client.dart';
+import 'package:mqtt_client/mqtt_server_client.dart';
 
 class ConfirmPage extends StatefulWidget {
-  const ConfirmPage({
+  ConfirmPage({
     Key? key,
-    required this.estimasiBiaya,
+    required this.nominal,
+    required this.qrCode,
   }) : super(key: key);
-
-  final String estimasiBiaya;
-
+  final String nominal;
+  final String qrCode;
   @override
-  State<ConfirmPage> createState() =>
-      _ConfirmPageState(estimasiBiaya: estimasiBiaya);
+  State<ConfirmPage> createState() => _ConfirmPageState();
 }
 
 class _ConfirmPageState extends State<ConfirmPage> {
-   _ConfirmPageState({
-    required this.estimasiBiaya,
-  }) : super();
+  final client = MqttServerClient('104.248.156.51', '');
+  bool isConnected = false;
+  var format = NumberFormat.currency(locale: 'id', symbol: 'Rp');
+  final LocalStorage storage = new LocalStorage('localstorage_app');
+  late List dataTarif = [];
+  late List _userData = [];
+  late String sisaSaldo = "";
+  late String totalBiaya = "";
+  late String biayakWh = "";
+  late String biayaPPJ = "";
+  late String biayaPPN = "";
+  late String biayaMaterai = "";
+  late String biayaAdmin = "";
 
-  final String estimasiBiaya;
+  @override
+  void initState() {
+    super.initState();
+    connect();
+    _fetchDataTarif();
+    _fetchDataUser();
+  }
+
+  Future<void> connect() async {
+    final clientID = 'spklu-${DateTime.now().millisecondsSinceEpoch}';
+    client.logging(on: false);
+    client.setProtocolV311();
+    client.keepAlivePeriod = 20;
+    client.connectTimeoutPeriod = 2000;
+    client.onConnected = onConnected;
+    client.onDisconnected = onDisconnected;
+    final connectMessage = MqttConnectMessage()
+        .withClientIdentifier('Mqtt_MyClientUniqueId')
+        .withWillTopic(
+            'willtopic') // If you set this you must set a will message
+        .withWillMessage('My Will message')
+        .startClean() // Non persistent session for testing
+        .withWillQos(MqttQos.atLeastOnce);
+    print('Connection to MQTT Server....');
+    client.connectionMessage = connectMessage;
+
+    try {
+      await client.connect("ali", "1234");
+    } catch (e) {
+      print('Exception: $e');
+      client.disconnect();
+    }
+  }
+
+  Future<void> subscribe(String topic) async {
+    String payload;
+    if (client.connectionStatus!.state == MqttConnectionState.connected) {
+      client.subscribe(topic, MqttQos.atMostOnce);
+      client.updates!
+          .listen((List<MqttReceivedMessage<MqttMessage>>? messages) {
+        final receivedMessage = messages![0].payload as MqttPublishMessage;
+        payload = MqttPublishPayload.bytesToStringAsString(
+            receivedMessage.payload.message);
+        messages.forEach((MqttReceivedMessage<MqttMessage> message) {
+          final String topic = message.topic;
+        });
+        if (topic == "SPKLU/Intek/Cikunir/Feedback/AC") {
+          if (payload == "1") {
+            postTransaksi();
+          }
+        }
+      });
+    } else {
+      print('Client not connected');
+    }
+  }
+
+  Future<void> publish(String topic, String message) async {
+    final builder = MqttClientPayloadBuilder();
+    builder.addString(message);
+    client.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
+  }
+
+  void onDisconnected() {
+    print("Disconnected to MQTT server");
+    setState(() {
+      isConnected = false;
+    });
+  }
+
+  void onConnected() {
+    print("Connected to MQTT server");
+    setState(() {
+      isConnected = true;
+    });
+    subscribe("SPKLU/Intek/Cikunir/Feedback/AC");
+  }
+
+  Future<void> _fetchDataUser() async {
+    final id = storage.getItem('id');
+    final api_token = storage.getItem('api_token');
+    final response = await http.get(Uri.parse(
+        'http://spklu.solusi-rnd.tech/api/users?token=$api_token&id=$id'));
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _userData = jsonDecode(response.body);
+        sisaSaldo = format.format(int.parse(_userData[0]['sisa_saldo']));
+      });
+    } else {
+      throw Exception('Failed to load data from API');
+    }
+  }
+
+  Future<void> _fetchDataTarif() async {
+    final api_token = storage.getItem('api_token');
+    final response = await http.get(Uri.parse(
+        'http://spklu.solusi-rnd.tech/api/data-tarif?token=$api_token'));
+    if (response.statusCode == 200) {
+      setState(() {
+        dataTarif = jsonDecode(response.body);
+
+        totalBiaya = ((int.parse(widget.nominal) *
+                    int.parse(dataTarif[0]['tarif_perkwh'])) +
+                int.parse(dataTarif[0]['tarif_ppj']) +
+                int.parse(dataTarif[0]['tarif_ppn']) +
+                int.parse(dataTarif[0]['tarif_admin']) +
+                int.parse(dataTarif[0]['tarif_materai']))
+            .toStringAsFixed(0);
+
+        biayakWh = (int.parse(dataTarif[0]['tarif_perkwh'])).toStringAsFixed(0);
+
+        biayaPPJ = dataTarif[0]['tarif_ppj'];
+        biayaPPN = dataTarif[0]['tarif_ppn'];
+        biayaMaterai = dataTarif[0]['tarif_materai'];
+        biayaAdmin = dataTarif[0]['tarif_admin'];
+      });
+    } else {
+      throw Exception('Failed to load data from API');
+    }
+  }
+
+  Future<void> postTransaksi() async {
+    final api_token = storage.getItem('api_token');
+    final id = storage.getItem('id');
+    final apiUrl = 'http://spklu.solusi-rnd.tech/api/transaksi';
+    final headers = {'Content-Type': 'application/json'};
+    final body = {
+      'id_user': id,
+      'qrcode': widget.qrCode,
+      'nominal': widget.nominal,
+      'costkwh': biayakWh,
+      'ppj': biayaPPJ,
+      'ppn': biayaPPN,
+      'materai': biayaMaterai,
+      'admin': biayaAdmin,
+      'token': api_token,
+    };
+
+    http
+        .post(Uri.parse(apiUrl), headers: headers, body: jsonEncode(body))
+        .then((response) {
+      if (response.statusCode == 200) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const StatusPage(),
+          ),
+        );
+      } else {
+        print('Failed, status code: ${response.statusCode}');
+      }
+    }).catchError((error) {
+      print('Terjadi error: $error');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,11 +212,9 @@ class _ConfirmPageState extends State<ConfirmPage> {
           toolbarHeight: 70,
           centerTitle: true,
           backgroundColor: blue,
-          title: Text(
+          title: const Text(
             "Cost Details",
-            style: GoogleFonts.inter(
-                color: Color.fromRGBO(247, 247, 248, 1),
-                fontWeight: FontWeight.bold),
+            style: TextStyle(color: Color.fromRGBO(247, 247, 248, 1)),
           ),
         ),
         body: Container(
@@ -71,22 +241,22 @@ class _ConfirmPageState extends State<ConfirmPage> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            // ignore: prefer_const_literals_to_create_immutables
                             children: [
                               const Text(
-                                'Total Estimated cost',
+                                'Total Estimated Cost',
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
                                     fontSize: 14),
                               ),
-                              Text(
-                                'Rp $estimasiBiaya ',
-                                style: GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 30),
-                              ),
+                              if (dataTarif.isNotEmpty)
+                                Text(
+                                  'Rp ${totalBiaya.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 30),
+                                ),
                             ],
                           ),
                         ),
@@ -116,11 +286,13 @@ class _ConfirmPageState extends State<ConfirmPage> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Icon(Icons.credit_card_rounded),
-                              Text(
-                                "Rp 312.590",
-                                style: TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
+                              if (dataTarif.isNotEmpty)
+                                Text(
+                                  "${sisaSaldo}",
+                                  style: TextStyle(
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.bold),
+                                ),
                             ],
                           ),
                         ],
@@ -133,7 +305,9 @@ class _ConfirmPageState extends State<ConfirmPage> {
                               onPrimary: blue,
                               onSurface: blue),
                           child: Text("Refresh"),
-                          onPressed: () {},
+                          onPressed: () {
+                            _fetchDataUser();
+                          },
                         ),
                       )
                     ],
@@ -161,95 +335,101 @@ class _ConfirmPageState extends State<ConfirmPage> {
                       width: width,
                       color: white,
                       child: Container(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Detail Biaya",
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w500),
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Total kWh dibeli",
-                                    style: TextStyle(color: Colors.black38),
-                                  ),
-                                  Text("30 kWh",
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Cost Details",
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w500),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Total kWh dibeli",
+                                  style: TextStyle(color: Colors.black38),
+                                ),
+                                if (dataTarif.isNotEmpty)
+                                  Text("${widget.nominal} kWh",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Biaya Kwh",
+                                  style: TextStyle(color: Colors.black38),
+                                ),
+                                if (dataTarif.isNotEmpty)
                                   Text(
-                                    "Biaya Kwh",
-                                    style: TextStyle(color: Colors.black38),
-                                  ),
-                                  Text("Rp 73.232",
+                                      "Rp ${biayakWh.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Biaya PPJ",
+                                  style: TextStyle(color: Colors.black38),
+                                ),
+                                if (dataTarif.isNotEmpty)
                                   Text(
-                                    "Biaya PPJ",
-                                    style: TextStyle(color: Colors.black38),
-                                  ),
-                                  Text("Rp 1.202",
+                                      "Rp ${biayaPPJ.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Biaya PPN",
+                                  style: TextStyle(color: Colors.black38),
+                                ),
+                                if (dataTarif.isNotEmpty)
                                   Text(
-                                    "Biaya PPN",
-                                    style: TextStyle(color: Colors.black38),
-                                  ),
-                                  Text("Rp 0",
+                                      "Rp ${biayaPPN.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  "Biaya Materai",
+                                  style: TextStyle(color: Colors.black38),
+                                ),
+                                if (dataTarif.isNotEmpty)
                                   Text(
-                                    "Biaya Materai",
-                                    style: TextStyle(color: Colors.black38),
-                                  ),
-                                  Text("Rp 0",
+                                      "Rp ${biayaMaterai.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
+                                      style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Biaya Admin",
+                                  style: TextStyle(color: Colors.black38),
+                                ),
+                                if (dataTarif.isNotEmpty)
+                                  Text(
+                                      "Rp ${biayaAdmin.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Biaya Admin",
-                                    style: TextStyle(color: Colors.black38),
-                                  ),
-                                  Text("Rp 550",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ],
-                          )),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -271,90 +451,35 @@ class _ConfirmPageState extends State<ConfirmPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          Text(
+                          const Text(
                             "Total",
                             style: TextStyle(fontSize: 16),
                           ),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text(
-                                "Rp 80.590",
-                                style: TextStyle(
-                                    fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
+                              if (dataTarif.isNotEmpty)
+                                Text(
+                                  "Rp ${totalBiaya.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
+                                  style: GoogleFonts.chakraPetch(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
+                                ),
                             ],
                           ),
                         ],
                       ),
-                      Container(
+                      SizedBox(
                         width: width * 0.3,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: blue,
                           ),
-                          child: Text("Next"),
+                          child: const Text("Pgit cloneay"),
                           onPressed: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => StatusPage(),
-                                ));
-                            // AwesomeDialog(
-                            //   context: context,
-                            //   dialogType: DialogType.warning,
-                            //   width: width,
-                            //   buttonsBorderRadius: const BorderRadius.all(
-                            //     Radius.circular(2),
-                            //   ),
-                            //   dismissOnTouchOutside: false,
-                            //   dismissOnBackKeyPress: true,
-                            //   onDismissCallback: (type) {
-                            //     ScaffoldMessenger.of(context).showSnackBar(
-                            //       SnackBar(
-                            //         content: Text('Dismissed by $type'),
-                            //       ),
-                            //     );
-                            //   },
-                            //   headerAnimationLoop: false,
-                            //   animType: AnimType.bottomSlide,
-                            //   title: 'INFO',
-                            //   desc:
-                            //       'This Dialog can be dismissed touching outside',
-                            //   // showCloseIcon: true,
-                            //   btnCancelOnPress: () {},
-                            // ).show();
+                            publish("SPKLU/Intek/Cikunir/Status/AC", "1");
                           },
                         ),
-                        //     AnimatedButton(
-                        //   text: 'Next',
-                        //   pressEvent: () {
-                        //     AwesomeDialog(
-                        //       context: context,
-                        //       dialogType: DialogType.warning,
-                        //       width: width ,
-                        //       buttonsBorderRadius: const BorderRadius.all(
-                        //         Radius.circular(2),
-                        //       ),
-                        //       dismissOnTouchOutside: false,
-                        //       dismissOnBackKeyPress: true,
-                        //       onDismissCallback: (type) {
-                        //         ScaffoldMessenger.of(context).showSnackBar(
-                        //           SnackBar(
-                        //             content: Text('Dismissed by $type'),
-                        //           ),
-                        //         );
-                        //       },
-                        //       headerAnimationLoop: false,
-                        //       animType: AnimType.bottomSlide,
-                        //       title: 'INFO',
-                        //       desc:
-                        //           'This Dialog can be dismissed touching outside',
-                        //       // showCloseIcon: true,
-                        //       btnCancelOnPress: () {},
-                        //     ).show();
-                        //   },
-                        // ),
                       )
                     ],
                   ),
@@ -365,5 +490,11 @@ class _ConfirmPageState extends State<ConfirmPage> {
         ),
       );
     });
+  }
+
+  @override
+  void dispose() {
+    client.disconnect();
+    super.dispose();
   }
 }

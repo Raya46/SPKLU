@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:convert';
 
 import 'package:awesome_dialog/awesome_dialog.dart';
@@ -9,6 +11,8 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:localstorage/localstorage.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 // import 'package:google_fonts/google_fonts.dart';
 
 class LocationPage extends StatefulWidget {
@@ -27,7 +31,8 @@ class _Locationpage extends State<LocationPage> {
   final LocalStorage storage = new LocalStorage('localstorage_app');
   late List _lokasiData = [];
   late String? lengthData;
-  bool _isLoading = true;
+  bool _isLoading = false;
+  String urllucu = 'https://www.google.com/maps/search/?api=1&query=';
 
   @override
   void initState() {
@@ -43,7 +48,7 @@ class _Locationpage extends State<LocationPage> {
     if (response.statusCode == 200) {
       setState(() {
         _lokasiData = jsonDecode(response.body);
-        _isLoading = false;
+        _isLoading = true;
         // _lokasiData.forEach((item) {
         //   print(item['id']);
         //   print(item['kode_lokasi']);
@@ -86,23 +91,65 @@ class _Locationpage extends State<LocationPage> {
                 " Locations",
               ),
               Container(
-                margin: const EdgeInsets.symmetric(vertical: 15),
-                child: Column(
-                  children: [
-                    for (var data in _lokasiData)
-                      Container(
-                        margin: const EdgeInsets.symmetric(vertical: 6),
-                        child: widgetHistory(
-                          context,
-                          data['nama_lokasi'],
-                          data['alamat_lokasi'],
-                          data['jumlah'],
-                          data['url_arah'],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+                  margin: const EdgeInsets.symmetric(vertical: 15),
+                  child: _isLoading
+                      ? Column(
+                          children: [
+                            for (var data in _lokasiData)
+                              Container(
+                                margin: const EdgeInsets.symmetric(vertical: 6),
+                                child: widgetHistory(
+                                  context,
+                                  data['nama_lokasi'],
+                                  data['alamat_lokasi'],
+                                  data['jumlah'],
+                                  data['url_arah'],
+                                ),
+                              )
+                          ],
+                        )
+                      : Shimmer.fromColors(
+                          child: Column(
+                            children: [
+                              Container(
+                                height:
+                                    MediaQuery.of(context).size.height / 6.5,
+                                width: MediaQuery.of(context).size.width / 1.15,
+                                decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.circular(16)),
+                              ),
+                              Divider(),
+                              Container(
+                                height:
+                                    MediaQuery.of(context).size.height / 6.5,
+                                width: MediaQuery.of(context).size.width / 1.15,
+                                decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.circular(16)),
+                              ),
+                              Divider(),
+                              Container(
+                                height:
+                                    MediaQuery.of(context).size.height / 6.5,
+                                width: MediaQuery.of(context).size.width / 1.15,
+                                decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.circular(16)),
+                              ),
+                              Divider(),
+                              Container(
+                                height:
+                                    MediaQuery.of(context).size.height / 6.5,
+                                width: MediaQuery.of(context).size.width / 1.15,
+                                decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.circular(16)),
+                              ),
+                            ],
+                          ),
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!)),
             ],
           ),
         ),
@@ -128,7 +175,7 @@ Widget widgetHistory(
                   color: blue,
                 ),
                 Container(
-                  width: MediaQuery.of(context).size.width / 1.15,
+                  width: MediaQuery.of(context).size.width / 1.16,
                   padding: const EdgeInsets.all(10),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -180,10 +227,10 @@ Widget widgetHistory(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.charging_station_rounded,
+                              Icon(Icons.charging_station_rounded,
                                   size: 22, color: blue),
                               Text(
                                 '$jumlahChargerBox Charger Box',
@@ -198,17 +245,15 @@ Widget widgetHistory(
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Transform.scale(
-                                scale: 0.8,
-                                child: SizedBox(
-                                  width: MediaQuery.of(context).size.width / 3.2,
-                                  child: ElevatedButton(
+                              Container(
+                                width: MediaQuery.of(context).size.width / 3.1,
+                                child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: blue,
                                     ),
                                     child: Row(
-                                      // mainAxisAlignment:
-                                      //     MainAxisAlignment.spaceAround,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceAround,
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
                                       children: [
@@ -218,32 +263,18 @@ Widget widgetHistory(
                                         ),
                                         Text(
                                           'Direction',
-                                          style: GoogleFonts.inter(color: white),
+                                          style:
+                                              GoogleFonts.inter(color: white),
                                         )
                                       ],
                                     ),
-                                    onPressed: () {
-                                      AwesomeDialog(
-                                        context: context,
-                                        dialogType: DialogType.error,
-                                        width:
-                                            MediaQuery.of(context).size.width / 1,
-                                        buttonsBorderRadius:
-                                            const BorderRadius.all(
-                                          Radius.circular(2),
-                                        ),
-                                        dismissOnTouchOutside: false,
-                                        dismissOnBackKeyPress: true,
-                                        headerAnimationLoop: false,
-                                        animType: AnimType.scale,
-                                        title: 'INFO',
-                                        desc:
-                                            'This Dialog can be dismissed touching outside',
-                                        btnCancelOnPress: () {},
-                                      ).show();
-                                    },
-                                  ),
-                                ),
+                                    onPressed: () async {
+                                      if (await canLaunch(urlArah)) {
+                                        await launch(urlArah);
+                                      } else {
+                                        throw 'Tidak dapat membuka $urlArah';
+                                      }
+                                    }),
                               )
                             ],
                           )

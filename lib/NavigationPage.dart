@@ -46,7 +46,7 @@ class _NavigationPageState extends State<NavigationPage> {
         Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>  ChargingInputPage(scanBarcode: scanBarcode, )),
+              builder: (context) =>  ChargingInputPage(qrCode: scanBarcode  ), ),
             );
       }
     } on PlatformException {

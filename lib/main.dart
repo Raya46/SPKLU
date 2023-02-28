@@ -6,6 +6,7 @@ import 'package:flutetr_spklu/page/Payment/ChargingInputPage.dart';
 import 'package:flutetr_spklu/tester.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,6 +25,7 @@ class _MyAppState extends State<MyApp> {
     // ignore: prefer_const_constructors
     return MaterialApp(
       theme: ThemeData(
+        fontFamily: GoogleFonts.inter().fontFamily,
         primaryColor: Colors.white,
         // Add the line below to get horizontal sliding transitions for routes.
         pageTransitionsTheme: const PageTransitionsTheme(builders: {

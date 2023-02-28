@@ -1,7 +1,8 @@
-// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors, use_build_context_synchronously
 
 import 'dart:convert';
 
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../NavigationPage.dart';
@@ -234,14 +235,31 @@ class _LoginScreenState extends State<LoginScreen> {
                 "Your account is not active, please contact the administrator");
           }
         } else {
-          showCupertinoAlertDialog(context, "Alert!",
-              "Your username or password is wrong. Please check again!");
+          dangerAlert(context);
         }
       } catch (e) {
         print(e);
       }
     }
   }
+}
+
+dangerAlert(context) {
+  AwesomeDialog(
+    context: context,
+    dialogType: DialogType.error,
+    width: MediaQuery.of(context).size.width / 1,
+    buttonsBorderRadius: const BorderRadius.all(
+      Radius.circular(2),
+    ),
+    dismissOnTouchOutside: false,
+    dismissOnBackKeyPress: true,
+    headerAnimationLoop: false,
+    animType: AnimType.scale,
+    title: 'ALERT',
+    desc: '"Your username or password is wrong. Please check again!"',
+    btnCancelOnPress: () {},
+  ).show();
 }
 
 void showCupertinoAlertDialog(BuildContext context, title, content) {
