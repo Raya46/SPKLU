@@ -3,6 +3,7 @@
 import 'package:flutetr_spklu/page/Feature/Scanner.dart';
 import 'package:flutetr_spklu/page/LoginPage/LoginPage.dart';
 import 'package:flutetr_spklu/page/Payment/ChargingInputPage.dart';
+import 'package:flutetr_spklu/page/onBoardingPage/BoardingPage.dart';
 import 'package:flutetr_spklu/tester.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';

@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:flutetr_spklu/NavigationPage.dart';
 import 'package:flutetr_spklu/global/color.dart';
+import 'package:flutetr_spklu/page/LoginPage/LoginPage.dart';
 import 'package:flutetr_spklu/page/Payment/ConfirmPage.dart';
+import 'package:flutetr_spklu/page/Payment/widget/alertPay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -377,13 +379,16 @@ class _ChargingInputScreenState extends State<ChargingInputScreen> {
                     primary: const Color.fromRGBO(0, 125, 251, 1),
                   ),
                   onPressed: () {
+                    if(nominalKWH.text.isNotEmpty){
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => ConfirmPage(
                             nominal: nominalKWH.text, qrCode: widget.qrCode),
                       ),
-                    );
+                    );}else{
+                      dangerNull(context);
+                    }
                   },
                   child: const Text('Next', style: TextStyle(fontSize: 16)),
                 ),

@@ -59,12 +59,17 @@ class Status extends StatelessWidget {
                         child: Container(
                           width: width / 1.5,
                           height: width / 2.1,
-                          decoration: const BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage("assets/images/car.png"),
-                              fit: BoxFit.contain,
-                            ),
+                          child: Icon(
+                            Icons.car_repair,
+                            size: 120,
+                            color: blue,
                           ),
+                          // decoration: const BoxDecoration(
+                          //   image: DecorationImage(
+                          //     image: AssetImage("assets/images/car.png"),
+                          //     fit: BoxFit.contain,
+                          //   ),
+                          // ),
                         ),
                       ),
                       Text(

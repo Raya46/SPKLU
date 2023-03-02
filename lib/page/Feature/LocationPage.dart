@@ -109,6 +109,8 @@ class _Locationpage extends State<LocationPage> {
                           ],
                         )
                       : Shimmer.fromColors(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
                           child: Column(
                             children: [
                               Container(
@@ -147,9 +149,7 @@ class _Locationpage extends State<LocationPage> {
                                     borderRadius: BorderRadius.circular(16)),
                               ),
                             ],
-                          ),
-                          baseColor: Colors.grey[300]!,
-                          highlightColor: Colors.grey[100]!)),
+                          ))),
             ],
           ),
         ),
@@ -245,36 +245,36 @@ Widget widgetHistory(
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Container(
+                              SizedBox(
                                 width: MediaQuery.of(context).size.width / 3.1,
                                 child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: blue,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        const Icon(
-                                          Icons.gps_fixed,
-                                          color: white,
-                                        ),
-                                        Text(
-                                          'Direction',
-                                          style:
-                                              GoogleFonts.inter(color: white),
-                                        )
-                                      ],
-                                    ),
-                                    onPressed: () async {
-                                      if (await canLaunch(urlArah)) {
-                                        await launch(urlArah);
-                                      } else {
-                                        throw 'Tidak dapat membuka $urlArah';
-                                      }
-                                    }),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: blue,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.gps_fixed,
+                                        color: white,
+                                      ),
+                                      Text(
+                                        'Direction',
+                                        style: GoogleFonts.inter(color: white),
+                                      )
+                                    ],
+                                  ),
+                                  onPressed: () async {
+                                    if (await canLaunch(urlArah)) {
+                                      await launch(urlArah);
+                                    } else {
+                                      throw 'Tidak dapat membuka $urlArah';
+                                    }
+                                  },
+                                ),
                               )
                             ],
                           )

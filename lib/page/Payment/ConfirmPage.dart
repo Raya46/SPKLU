@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutetr_spklu/global/color.dart';
 import 'package:flutetr_spklu/page/Payment/StatusPage.dart';
+import 'package:flutetr_spklu/page/Payment/widget/alertPay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
@@ -90,6 +91,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
         if (topic == "SPKLU/Intek/Cikunir/Feedback/AC") {
           if (payload == "1") {
             postTransaksi();
+            
           }
         }
       });
@@ -252,7 +254,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
                               if (dataTarif.isNotEmpty)
                                 Text(
                                   'Rp ${totalBiaya.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}',
-                                  style: TextStyle(
+                                  style: GoogleFonts.chakraPetch(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w500,
                                       fontSize: 30),
@@ -278,18 +280,18 @@ class _ConfirmPageState extends State<ConfirmPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          Text(
+                          const Text(
                             "Your Balance",
                             style: TextStyle(fontSize: 16),
                           ),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Icon(Icons.credit_card_rounded),
+                              const Icon(Icons.credit_card_rounded),
                               if (dataTarif.isNotEmpty)
                                 Text(
                                   "${sisaSaldo}",
-                                  style: TextStyle(
+                                  style: GoogleFonts.chakraPetch(
                                       fontSize: 19,
                                       fontWeight: FontWeight.bold),
                                 ),
@@ -475,9 +477,9 @@ class _ConfirmPageState extends State<ConfirmPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: blue,
                           ),
-                          child: const Text("Pgit cloneay"),
+                          child: const Text("Pay"),
                           onPressed: () {
-                            publish("SPKLU/Intek/Cikunir/Status/AC", "1");
+                            confirmAlert(context).show();
                           },
                         ),
                       )
@@ -490,6 +492,27 @@ class _ConfirmPageState extends State<ConfirmPage> {
         ),
       );
     });
+  }
+
+  AwesomeDialog confirmAlert(BuildContext context) {
+    return AwesomeDialog(
+      context: context,
+      dialogType: DialogType.noHeader,
+      width: MediaQuery.of(context).size.width / 1,
+      buttonsBorderRadius: const BorderRadius.all(
+        Radius.circular(2),
+      ),
+      dismissOnTouchOutside: false,
+      dismissOnBackKeyPress: true,
+      headerAnimationLoop: false,
+      animType: AnimType.scale,
+      title: 'Confirm',
+      desc: '"Please enter the kwh value you want to buy"',
+      btnCancelOnPress: () {},
+      btnOkOnPress: () {
+        publish("SPKLU/Intek/Cikunir/Status/AC", "1");
+      },
+    );
   }
 
   @override
