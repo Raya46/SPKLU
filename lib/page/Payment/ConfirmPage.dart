@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
@@ -8,6 +10,7 @@ import 'package:flutetr_spklu/page/Payment/widget/alertPay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:localstorage/localstorage.dart';
@@ -28,6 +31,7 @@ class ConfirmPage extends StatefulWidget {
 }
 
 class _ConfirmPageState extends State<ConfirmPage> {
+  bool isLoading = false;
   final client = MqttServerClient('104.248.156.51', '');
   bool isConnected = false;
   var format = NumberFormat.currency(locale: 'id', symbol: 'Rp');
@@ -41,6 +45,55 @@ class _ConfirmPageState extends State<ConfirmPage> {
   late String biayaPPN = "";
   late String biayaMaterai = "";
   late String biayaAdmin = "";
+
+  void _handleButtonPressed() {
+    publish("SPKLU/Intek/Cikunir/Status/AC", "1");
+
+    setState(() {
+      isLoading = true;
+    });
+
+    Future.delayed(Duration(seconds: 2), () {
+      setState(() {
+        isLoading = false;
+      });
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => StatusPage()),
+      );
+    });
+  }
+
+  openLoading(BuildContext context, [bool mounted = true]) async {
+    showDialog(
+        barrierDismissible: true,
+        context: context,
+        builder: (_) {
+          return Dialog(
+            // The background color
+            backgroundColor: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // The loading indicator
+                  CircularProgressIndicator(),
+                  SizedBox(
+                    height: 15,
+                  ),
+                  // Some text
+                  Text('Loading...')
+                ],
+              ),
+            ),
+          );
+        });
+    await Future.delayed(const Duration(seconds: 3)).then((_) {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    });
+  }
 
   @override
   void initState() {
@@ -81,7 +134,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
     if (client.connectionStatus!.state == MqttConnectionState.connected) {
       client.subscribe(topic, MqttQos.atMostOnce);
       client.updates!
-          .listen((List<MqttReceivedMessage<MqttMessage>>? messages) {
+          .listen((List<MqttReceivedMessage<MqttMessage>>? messages) async {
         final receivedMessage = messages![0].payload as MqttPublishMessage;
         payload = MqttPublishPayload.bytesToStringAsString(
             receivedMessage.payload.message);
@@ -89,10 +142,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
           final String topic = message.topic;
         });
         if (topic == "SPKLU/Intek/Cikunir/Feedback/AC") {
-          if (payload == "1") {
-            postTransaksi();
-            
-          }
+          if (payload == "1") await {postTransaksi()};
         }
       });
     } else {
@@ -186,12 +236,12 @@ class _ConfirmPageState extends State<ConfirmPage> {
         .post(Uri.parse(apiUrl), headers: headers, body: jsonEncode(body))
         .then((response) {
       if (response.statusCode == 200) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const StatusPage(),
-          ),
-        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => const StatusPage(),
+        //   ),
+        // );
       } else {
         print('Failed, status code: ${response.statusCode}');
       }
@@ -307,8 +357,8 @@ class _ConfirmPageState extends State<ConfirmPage> {
                               onPrimary: blue,
                               onSurface: blue),
                           child: Text("Refresh"),
-                          onPressed: () {
-                            _fetchDataUser();
+                          onPressed: () async {
+                            await openLoading(context);
                           },
                         ),
                       )
@@ -472,17 +522,29 @@ class _ConfirmPageState extends State<ConfirmPage> {
                         ],
                       ),
                       SizedBox(
-                        width: width * 0.3,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: blue,
-                          ),
-                          child: const Text("Pay"),
-                          onPressed: () {
-                            confirmAlert(context).show();
-                          },
-                        ),
-                      )
+                          width: width * 0.3,
+                          child: isLoading
+                              ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                  // ignore: prefer_const_literals_to_create_immutables
+                                  children: [
+                                    // const Text('Loading'),
+                                    SpinKitThreeBounce(
+                                      color: blue,
+                                      size: 20.0,
+                                    ),
+                                  ],
+                                )
+                              : ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: blue,
+                                  ),
+                                  child: const Text("Pay"),
+                                  onPressed: () {
+                                    // _handleButtonPressed();
+                                    confirmAlert(context).show();
+                                  },
+                                ))
                     ],
                   ),
                 ),
@@ -509,8 +571,9 @@ class _ConfirmPageState extends State<ConfirmPage> {
       title: 'Confirm',
       desc: '"Please enter the kwh value you want to buy"',
       btnCancelOnPress: () {},
-      btnOkOnPress: () {
-        publish("SPKLU/Intek/Cikunir/Status/AC", "1");
+      btnOkOnPress: () async {
+        // publish("SPKLU/Intek/Cikunir/Status/AC", "1");
+        _handleButtonPressed();
       },
     );
   }

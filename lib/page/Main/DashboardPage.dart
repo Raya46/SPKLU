@@ -1,3 +1,5 @@
+// ignore_for_file: sort_child_properties_last
+
 import 'dart:convert';
 
 import 'package:flutetr_spklu/page/Feature/HistoryPage.dart';
@@ -8,6 +10,7 @@ import 'package:localstorage/localstorage.dart';
 import 'package:http/http.dart' as http;
 // import 'ChargingInputPage.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 
 void main() {
   runApp(const DashboardPage());
@@ -40,6 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final LocalStorage storage = new LocalStorage('localstorage_app');
   late List _userData = [];
   late String sisaSaldo = "";
+  bool isLoading = false;
   @override
   void initState() {
     super.initState();
@@ -54,6 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     if (response.statusCode == 200) {
       setState(() {
+        isLoading = true;
         _userData = jsonDecode(response.body);
         sisaSaldo = format.format(int.parse(_userData[0]['sisa_saldo']));
         print(sisaSaldo);
@@ -107,15 +112,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Container(
                             width: 5,
                           ),
-                          if (_userData.isNotEmpty)
-                            Text(
-                              '$sisaSaldo',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                          isLoading
+                              ? Text(
+                                  sisaSaldo,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : Shimmer.fromColors(
+                                  child: Container(
+                                    height: 22,
+                                    width: 120,
+                                    decoration: BoxDecoration(
+                                        color: Colors.grey,
+                                        borderRadius: BorderRadius.circular(5)),
+                                  ),
+                                  baseColor: Color.fromRGBO(0, 125, 251, 1),
+                                  highlightColor:
+                                      Color.fromRGBO(86, 179, 255, 1))
                         ],
                       ),
                     ),
@@ -137,17 +153,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 children: <Widget>[
                                   Column(
                                     children: <Widget>[
-                                      if (_userData.isNotEmpty)
-                                        Container(
-                                          alignment: Alignment.topLeft,
-                                          child: Text(
-                                            'Hi, ${_userData[0]['name']}',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              color: Colors.black,
-                                            ),
+                                      isLoading
+                                          ? Container(
+                                              alignment: Alignment.topLeft,
+                                              child: Text(
+                                                'Hi, ${_userData[0]['name']}',
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            )
+                                          : Row(
+                                            children: [
+                                              Shimmer.fromColors(
+                                                  child: Container(
+                                                    alignment: Alignment.topLeft,
+                                                    height: 32,
+                                                    width: 150,
+                                                    decoration: BoxDecoration(
+                                                        color: Colors.grey,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                5)),
+                                                  ),
+                                                  baseColor: Colors.grey[300]!,
+                                                  highlightColor: Colors.grey[50]!),
+                                            ],
                                           ),
-                                        ),
                                       Container(
                                         height: 15,
                                       ),

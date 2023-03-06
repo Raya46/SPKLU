@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors, duplicate_ignore
 
 import 'package:flutetr_spklu/page/Feature/Scanner.dart';
 import 'package:flutetr_spklu/page/LoginPage/LoginPage.dart';

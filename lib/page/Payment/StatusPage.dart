@@ -1,3 +1,4 @@
+import 'package:flutetr_spklu/page/Main/DashboardPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/basic.dart';
 import 'package:flutter/src/widgets/container.dart';
@@ -14,15 +15,6 @@ class StatusPage extends StatefulWidget {
 class _StatusPageState extends State<StatusPage> {
   @override
   Widget build(BuildContext context) {
-    return Status();
-  }
-}
-
-class Status extends StatelessWidget {
-  const Status({super.key});
-
-  @override
-  Widget build(BuildContext context) {
     final Color blue = Color.fromRGBO(0, 125, 251, 1);
     final Color black = Color.fromRGBO(55, 63, 71, 1);
     final Color black70 = Color.fromRGBO(55, 63, 71, 0.7);
@@ -36,7 +28,14 @@ class Status extends StatelessWidget {
       return Scaffold(
         backgroundColor: bg,
         appBar: AppBar(
-          leading: const BackButton(color: Color.fromRGBO(247, 247, 248, 1)),
+          leading: BackButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const DashboardPage()),
+                );
+              },
+              color: Color.fromRGBO(247, 247, 248, 1)),
           elevation: 1,
           bottomOpacity: 1,
           toolbarHeight: 70,
