@@ -1,3 +1,4 @@
+// ignore: prefer_const_constructors
 import 'package:flutter/animation.dart';
 
 final Color blue = Color.fromRGBO(0, 125, 251, 1);

@@ -6,6 +6,8 @@ import 'package:flutetr_spklu/page/Feature/HistoryPage.dart';
 import 'package:flutetr_spklu/page/Feature/LocationPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:localstorage/localstorage.dart';
 import 'package:http/http.dart' as http;
 // import 'ChargingInputPage.dart';
@@ -106,7 +108,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Row(
                         children: <Widget>[
                           const Icon(
-                            Icons.wallet,
+                            Ionicons.card,
                             color: Colors.white,
                           ),
                           Container(
@@ -158,29 +160,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                               alignment: Alignment.topLeft,
                                               child: Text(
                                                 'Hi, ${_userData[0]['name']}',
-                                                style: TextStyle(
+                                                style: GoogleFonts.inter(
                                                   fontSize: 18,
-                                                  color: Colors.black,
+                                                  color: black,
                                                 ),
                                               ),
                                             )
                                           : Row(
-                                            children: [
-                                              Shimmer.fromColors(
-                                                  child: Container(
-                                                    alignment: Alignment.topLeft,
-                                                    height: 32,
-                                                    width: 150,
-                                                    decoration: BoxDecoration(
-                                                        color: Colors.grey,
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                                5)),
-                                                  ),
-                                                  baseColor: Colors.grey[300]!,
-                                                  highlightColor: Colors.grey[50]!),
-                                            ],
-                                          ),
+                                              children: [
+                                                Shimmer.fromColors(
+                                                    child: Container(
+                                                      alignment:
+                                                          Alignment.topLeft,
+                                                      height: 32,
+                                                      width: 150,
+                                                      decoration: BoxDecoration(
+                                                          color: Colors.grey,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(5)),
+                                                    ),
+                                                    baseColor:
+                                                        Colors.grey[300]!,
+                                                    highlightColor:
+                                                        Colors.grey[50]!),
+                                              ],
+                                            ),
                                       Container(
                                         height: 15,
                                       ),
@@ -257,9 +262,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 left: 10.0),
                                             alignment: Alignment.center,
                                             width: 70,
-                                            child: const Text(
+                                            child: Text(
                                               'Home Charging',
-                                              style: TextStyle(),
+                                              style: GoogleFonts.inter(
+                                                  color: black,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600),
                                               textAlign: TextAlign.center,
                                             ),
                                           ),
@@ -267,9 +275,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           Container(
                                             alignment: Alignment.center,
                                             width: 70,
-                                            child: const Text(
+                                            child: Text(
                                               'SPKLU Location',
-                                              style: TextStyle(),
+                                              style: GoogleFonts.inter(
+                                                  color: black,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600),
                                               textAlign: TextAlign.center,
                                             ),
                                           ),
@@ -279,9 +290,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 right: 10.0),
                                             alignment: Alignment.center,
                                             width: 70,
-                                            child: const Text(
+                                            child: Text(
                                               'Topup Balance',
-                                              style: TextStyle(),
+                                              style: GoogleFonts.inter(
+                                                  color: black,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600),
                                               textAlign: TextAlign.center,
                                             ),
                                           ),
@@ -310,44 +324,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 children: <Widget>[
                                   Column(
                                     children: <Widget>[
-                                      const Text(
-                                        'SPKLU ENERGY CONSUMPTION',
-                                        style: TextStyle(
+                                      Text(
+                                        'SPKLU Energy Consumption',
+                                        style: GoogleFonts.inter(
                                           fontSize: 18,
+                                          fontWeight: FontWeight.bold,
                                           color: Colors.black,
                                         ),
                                       ),
                                       Container(
                                         height: 7,
                                       ),
-                                      const Text(
+                                      Text(
                                         'Today',
-                                        style: TextStyle(
-                                          color:
-                                              Color.fromARGB(255, 100, 99, 99),
-                                        ),
+                                        style: GoogleFonts.inter(
+                                            color: black70, fontSize: 14),
                                       ),
                                       Container(
                                         height: 7,
                                       ),
-                                      const Text(
+                                      Text(
                                         '02 February 2023',
-                                        style: TextStyle(
-                                          color:
-                                              Color.fromARGB(255, 100, 99, 99),
-                                        ),
+                                        style: GoogleFonts.inter(
+                                            color: black70, fontSize: 14),
                                       ),
                                       Container(
                                         height: 20,
                                       ),
-                                      const Text(
+                                      Text(
                                         '0.00 kWh',
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color:
-                                              Color.fromARGB(255, 18, 50, 97),
-                                        ),
+                                        style: GoogleFonts.chakraPetch(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: black),
                                       ),
                                       Container(
                                         height: 13,
@@ -367,7 +376,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       const SizedBox(
                                         height: 5,
                                       ),
-                                      Container(
+                                      SizedBox(
                                         width: width * 0.55,
                                         height: height * 0.055,
                                         child: Card(
@@ -486,8 +495,8 @@ class TitleSPKLU extends StatelessWidget {
                   ),
                 );
               },
-              icon: const Icon(
-                Icons.notifications,
+              icon:const Icon(
+                Ionicons.notifications,
                 color: Colors.white,
                 size: 30,
               )),
