@@ -10,6 +10,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:localstorage/localstorage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ChargingInputPage extends StatelessWidget {
   const ChargingInputPage({
@@ -39,11 +41,11 @@ class ChargingInputScreen extends StatefulWidget {
 }
 
 class _ChargingInputScreenState extends State<ChargingInputScreen> {
-  final LocalStorage storage = new LocalStorage('localstorage_app');
   late List lokasiCharger = [];
   late List dataTarif = [];
   final nominalKWH = TextEditingController();
   String estimasiBiaya = "0";
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -69,12 +71,14 @@ class _ChargingInputScreenState extends State<ChargingInputScreen> {
   }
 
   Future<void> _fetchLokasiCharger() async {
-    final api_token = storage.getItem('api_token');
+    final prefs = await SharedPreferences.getInstance();
+    final api_token = prefs.getString('api_token');
     final response = await http.get(Uri.parse(
         'http://spklu.solusi-rnd.tech/api/lokasi-charger?token=$api_token&qrcode=${widget.qrCode}'));
     if (response.statusCode == 200) {
       setState(() {
         lokasiCharger = jsonDecode(response.body);
+        isLoading = true;
       });
     } else {
       throw Exception('Failed to load data from API');
@@ -82,12 +86,14 @@ class _ChargingInputScreenState extends State<ChargingInputScreen> {
   }
 
   Future<void> _fetchDataTarif() async {
-    final api_token = storage.getItem('api_token');
+    final prefs = await SharedPreferences.getInstance();
+    final api_token = prefs.getString('api_token');
     final response = await http.get(Uri.parse(
         'http://spklu.solusi-rnd.tech/api/data-tarif?token=$api_token'));
     if (response.statusCode == 200) {
       setState(() {
         dataTarif = jsonDecode(response.body);
+        isLoading = true;
       });
       print(dataTarif);
     } else {
@@ -164,21 +170,49 @@ class _ChargingInputScreenState extends State<ChargingInputScreen> {
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (lokasiCharger.isNotEmpty)
-                                  Text(
-                                    '${lokasiCharger[0]['nama_lokasi']}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                if (lokasiCharger.isNotEmpty)
-                                  Text(
-                                    '${lokasiCharger[0]['alamat_lokasi']}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                isLoading
+                                    ? Text(
+                                        '${lokasiCharger[0]['nama_lokasi']}',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                        ),
+                                      )
+                                    : Shimmer.fromColors(
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          height: 15,
+                                          width: 110,
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(5)),
+                                        ),
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[50]!),
+                                        Divider(
+                                  height: 4,
+                                  color: Colors.transparent,
+                                ),
+                                isLoading
+                                    ? Text(
+                                        '${lokasiCharger[0]['alamat_lokasi']}',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      )
+                                    : Shimmer.fromColors(
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          height: 15,
+                                          width: 200,
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(5)),
+                                        ),
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[50]!)
                               ],
                             ),
                           ),
@@ -240,21 +274,49 @@ class _ChargingInputScreenState extends State<ChargingInputScreen> {
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (lokasiCharger.isNotEmpty)
-                                  Text(
-                                    '${lokasiCharger[0]['nama_charger']}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                if (lokasiCharger.isNotEmpty)
-                                  Text(
-                                    'Plug: ${lokasiCharger[0]['nama_pengisian']} - ${lokasiCharger[0]['max_kwh']} kW',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                               isLoading
+                                    ? Text(
+                                        '${lokasiCharger[0]['nama_charger']}',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                        ),
+                                      )
+                                    : Shimmer.fromColors(
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          height: 15,
+                                          width: 110,
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(5)),
+                                        ),
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[50]!),
+                                Divider(
+                                  height: 4,
+                                  color: Colors.transparent,
+                                ),
+                                isLoading
+                                    ? Text(
+                                        'Plug: ${lokasiCharger[0]['nama_pengisian']} - ${lokasiCharger[0]['max_kwh']} kW',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      )
+                                    : Shimmer.fromColors(
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          height: 15,
+                                          width: 130,
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(5)),
+                                        ),
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[50]!)
                               ],
                             ),
                           ),
@@ -379,14 +441,15 @@ class _ChargingInputScreenState extends State<ChargingInputScreen> {
                     primary: const Color.fromRGBO(0, 125, 251, 1),
                   ),
                   onPressed: () {
-                    if(nominalKWH.text.isNotEmpty){
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ConfirmPage(
-                            nominal: nominalKWH.text, qrCode: widget.qrCode),
-                      ),
-                    );}else{
+                    if (nominalKWH.text.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ConfirmPage(
+                              nominal: nominalKWH.text, qrCode: widget.qrCode),
+                        ),
+                      );
+                    } else {
                       dangerNull(context);
                     }
                   },

@@ -8,10 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:localstorage/localstorage.dart';
 import 'package:http/http.dart' as http;
 // import 'ChargingInputPage.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
 void main() {
@@ -42,10 +42,10 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   var format = NumberFormat.currency(locale: 'id', symbol: 'Rp');
-  final LocalStorage storage = new LocalStorage('localstorage_app');
   late List _userData = [];
   late String sisaSaldo = "";
   bool isLoading = false;
+  final prefes = SharedPreferences.getInstance();
   @override
   void initState() {
     super.initState();
@@ -53,8 +53,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _fetchDataUser() async {
-    final id = storage.getItem('id');
-    final api_token = storage.getItem('api_token');
+    // final id = storage.getItem('id');
+    // final api_token = storage.getItem('api_token');
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getInt('id');
+    final api_token = prefs.getString('api_token');
     final response = await http.get(Uri.parse(
         'http://spklu.solusi-rnd.tech/api/users?token=$api_token&id=$id'));
 
@@ -64,6 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _userData = jsonDecode(response.body);
         sisaSaldo = format.format(int.parse(_userData[0]['sisa_saldo']));
         print(sisaSaldo);
+        print(api_token);
         // _lokasiData.forEach((item) {
         //   print(item['id']);
         //   print(item['kode_lokasi']);
@@ -244,7 +248,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 right: 13.0),
                                             child: IconButton(
                                               onPressed: () {
-                                                print("Topup Balance");
+            // print(prefs);
                                               },
                                               iconSize: 40.0,
                                               icon: const Icon(
@@ -495,7 +499,7 @@ class TitleSPKLU extends StatelessWidget {
                   ),
                 );
               },
-              icon:const Icon(
+              icon: const Icon(
                 Ionicons.notifications,
                 color: Colors.white,
                 size: 30,

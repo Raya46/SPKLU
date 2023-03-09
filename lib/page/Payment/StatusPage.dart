@@ -1,3 +1,4 @@
+import 'package:flutetr_spklu/NavigationPage.dart';
 import 'package:flutetr_spklu/page/Main/DashboardPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/basic.dart';
@@ -32,7 +33,7 @@ class _StatusPageState extends State<StatusPage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const DashboardPage()),
+                  MaterialPageRoute(builder: (context) => const NavigationPage()),
                 );
               },
               color: Color.fromRGBO(247, 247, 248, 1)),

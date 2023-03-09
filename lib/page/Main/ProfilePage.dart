@@ -9,6 +9,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:localstorage/localstorage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -29,8 +30,11 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _fetchDataUser() async {
-    final id = storage.getItem('id');
-    final api_token = storage.getItem('api_token');
+    // final id = storage.getItem('id');
+    // final api_token = storage.getItem('api_token');
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getInt('id');
+    final api_token = prefs.getString('api_token');
     final response = await http.get(Uri.parse(
         'http://spklu.solusi-rnd.tech/api/users?token=$api_token&id=$id'));
 

@@ -3,6 +3,8 @@
 import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutetr_spklu/global/color.dart';
 import 'package:flutetr_spklu/page/Payment/StatusPage.dart';
@@ -32,10 +34,10 @@ class ConfirmPage extends StatefulWidget {
 
 class _ConfirmPageState extends State<ConfirmPage> {
   bool isLoading = false;
+  bool payProcess = false;
   final client = MqttServerClient('104.248.156.51', '');
   bool isConnected = false;
   var format = NumberFormat.currency(locale: 'id', symbol: 'Rp');
-  final LocalStorage storage = new LocalStorage('localstorage_app');
   late List dataTarif = [];
   late List _userData = [];
   late String sisaSaldo = "";
@@ -46,23 +48,20 @@ class _ConfirmPageState extends State<ConfirmPage> {
   late String biayaMaterai = "";
   late String biayaAdmin = "";
 
-  void _handleButtonPressed() {
-    publish("SPKLU/Intek/Cikunir/Status/AC", "1");
+  // void _handleButtonPressed() {
 
-    setState(() {
-      isLoading = true;
-    });
+  //   setState(() {
+  //     payProcess = true;
+  //   });
 
-    Future.delayed(Duration(seconds: 2), () {
-      setState(() {
-        isLoading = false;
-      });
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => StatusPage()),
-      );
-    });
-  }
+  //   Future.delayed(Duration(seconds: 1), () {
+  //     setState(() {
+  //       payProcess = false;
+  //     });
+  //         publish("SPKLU/Intek/Cikunir/Status/AC", "1");
+
+  //   });
+  // }
 
   openLoading(BuildContext context, [bool mounted = true]) async {
     showDialog(
@@ -98,6 +97,9 @@ class _ConfirmPageState extends State<ConfirmPage> {
   @override
   void initState() {
     super.initState();
+    setState(() {
+      payProcess = false;
+    });
     connect();
     _fetchDataTarif();
     _fetchDataUser();
@@ -142,7 +144,12 @@ class _ConfirmPageState extends State<ConfirmPage> {
           final String topic = message.topic;
         });
         if (topic == "SPKLU/Intek/Cikunir/Feedback/AC") {
-          if (payload == "1") await {postTransaksi()};
+          if (payload == "1") {
+            setState(() {
+              payProcess = false;
+            });
+            postTransaksi();
+          }
         }
       });
     } else {
@@ -154,6 +161,9 @@ class _ConfirmPageState extends State<ConfirmPage> {
     final builder = MqttClientPayloadBuilder();
     builder.addString(message);
     client.publishMessage(topic, MqttQos.atLeastOnce, builder.payload!);
+    setState(() {
+      payProcess = true;
+    });
   }
 
   void onDisconnected() {
@@ -172,13 +182,15 @@ class _ConfirmPageState extends State<ConfirmPage> {
   }
 
   Future<void> _fetchDataUser() async {
-    final id = storage.getItem('id');
-    final api_token = storage.getItem('api_token');
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getInt('id');
+    final api_token = prefs.getString('api_token');
     final response = await http.get(Uri.parse(
         'http://spklu.solusi-rnd.tech/api/users?token=$api_token&id=$id'));
 
     if (response.statusCode == 200) {
       setState(() {
+        isLoading = true;
         _userData = jsonDecode(response.body);
         sisaSaldo = format.format(int.parse(_userData[0]['sisa_saldo']));
       });
@@ -188,11 +200,13 @@ class _ConfirmPageState extends State<ConfirmPage> {
   }
 
   Future<void> _fetchDataTarif() async {
-    final api_token = storage.getItem('api_token');
+    final prefs = await SharedPreferences.getInstance();
+    final api_token = prefs.getString('api_token');
     final response = await http.get(Uri.parse(
         'http://spklu.solusi-rnd.tech/api/data-tarif?token=$api_token'));
     if (response.statusCode == 200) {
       setState(() {
+        isLoading = true;
         dataTarif = jsonDecode(response.body);
 
         totalBiaya = ((int.parse(widget.nominal) *
@@ -216,8 +230,9 @@ class _ConfirmPageState extends State<ConfirmPage> {
   }
 
   Future<void> postTransaksi() async {
-    final api_token = storage.getItem('api_token');
-    final id = storage.getItem('id');
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getInt('id');
+    final api_token = prefs.getString('api_token');
     final apiUrl = 'http://spklu.solusi-rnd.tech/api/transaksi';
     final headers = {'Content-Type': 'application/json'};
     final body = {
@@ -231,17 +246,16 @@ class _ConfirmPageState extends State<ConfirmPage> {
       'admin': biayaAdmin,
       'token': api_token,
     };
-
     http
         .post(Uri.parse(apiUrl), headers: headers, body: jsonEncode(body))
         .then((response) {
       if (response.statusCode == 200) {
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => const StatusPage(),
-        //   ),
-        // );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const StatusPage(),
+          ),
+        );
       } else {
         print('Failed, status code: ${response.statusCode}');
       }
@@ -301,14 +315,27 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                     fontWeight: FontWeight.w500,
                                     fontSize: 14),
                               ),
-                              if (dataTarif.isNotEmpty)
-                                Text(
-                                  'Rp ${totalBiaya.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}',
-                                  style: GoogleFonts.chakraPetch(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 30),
-                                ),
+                              isLoading
+                                  ? Text(
+                                      'Rp ${totalBiaya.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}',
+                                      style: GoogleFonts.chakraPetch(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 30),
+                                    )
+                                  : Shimmer.fromColors(
+                                      child: Container(
+                                        alignment: Alignment.topLeft,
+                                        height: 30,
+                                        width: 110,
+                                        decoration: BoxDecoration(
+                                            color: Colors.grey[300],
+                                            borderRadius:
+                                                BorderRadius.circular(5)),
+                                      ),
+                                      baseColor: Color.fromRGBO(0, 125, 251, 1),
+                                      highlightColor:
+                                          Color.fromRGBO(86, 179, 255, 1)),
                             ],
                           ),
                         ),
@@ -403,10 +430,22 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                   "Total kWh dibeli",
                                   style: TextStyle(color: Colors.black38),
                                 ),
-                                if (dataTarif.isNotEmpty)
-                                  Text("${widget.nominal} kWh",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                isLoading
+                                    ? Text("${widget.nominal} kWh",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))
+                                    : Shimmer.fromColors(
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          height: 15,
+                                          width: 110,
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(5)),
+                                        ),
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[50]!),
                               ],
                             ),
                             Row(
@@ -416,11 +455,23 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                   "Biaya Kwh",
                                   style: TextStyle(color: Colors.black38),
                                 ),
-                                if (dataTarif.isNotEmpty)
-                                  Text(
-                                      "Rp ${biayakWh.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                isLoading
+                                    ? Text(
+                                        "Rp ${biayakWh.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))
+                                    : Shimmer.fromColors(
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          height: 15,
+                                          width: 110,
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(5)),
+                                        ),
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[50]!),
                               ],
                             ),
                             Row(
@@ -430,11 +481,23 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                   "Biaya PPJ",
                                   style: TextStyle(color: Colors.black38),
                                 ),
-                                if (dataTarif.isNotEmpty)
-                                  Text(
-                                      "Rp ${biayaPPJ.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                isLoading
+                                    ? Text(
+                                        "Rp ${biayaPPJ.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))
+                                    : Shimmer.fromColors(
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          height: 15,
+                                          width: 110,
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(5)),
+                                        ),
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[50]!),
                               ],
                             ),
                             Row(
@@ -444,11 +507,23 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                   "Biaya PPN",
                                   style: TextStyle(color: Colors.black38),
                                 ),
-                                if (dataTarif.isNotEmpty)
-                                  Text(
-                                      "Rp ${biayaPPN.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                isLoading
+                                    ? Text(
+                                        "Rp ${biayaPPN.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))
+                                    : Shimmer.fromColors(
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          height: 15,
+                                          width: 110,
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(5)),
+                                        ),
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[50]!),
                               ],
                             ),
                             Row(
@@ -458,11 +533,23 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                   "Biaya Materai",
                                   style: TextStyle(color: Colors.black38),
                                 ),
-                                if (dataTarif.isNotEmpty)
-                                  Text(
-                                      "Rp ${biayaMaterai.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
-                                      style: GoogleFonts.inter(
-                                          fontWeight: FontWeight.bold)),
+                                isLoading
+                                    ? Text(
+                                        "Rp ${biayaMaterai.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
+                                        style: GoogleFonts.inter(
+                                            fontWeight: FontWeight.bold))
+                                    : Shimmer.fromColors(
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          height: 15,
+                                          width: 110,
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(5)),
+                                        ),
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[50]!),
                               ],
                             ),
                             Row(
@@ -472,11 +559,23 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                   "Biaya Admin",
                                   style: TextStyle(color: Colors.black38),
                                 ),
-                                if (dataTarif.isNotEmpty)
-                                  Text(
-                                      "Rp ${biayaAdmin.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                isLoading
+                                    ? Text(
+                                        "Rp ${biayaAdmin.replaceAll(RegExp(r'\B(?=(\d{3})+(?!\d))'), '.')}",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold))
+                                    : Shimmer.fromColors(
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          height: 15,
+                                          width: 110,
+                                          decoration: BoxDecoration(
+                                              color: Colors.grey[300],
+                                              borderRadius:
+                                                  BorderRadius.circular(5)),
+                                        ),
+                                        baseColor: Colors.grey[300]!,
+                                        highlightColor: Colors.grey[50]!),
                               ],
                             ),
                           ],
@@ -523,9 +622,9 @@ class _ConfirmPageState extends State<ConfirmPage> {
                       ),
                       SizedBox(
                           width: width * 0.3,
-                          child: isLoading
+                          child: payProcess
                               ? Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   // ignore: prefer_const_literals_to_create_immutables
                                   children: [
                                     // const Text('Loading'),
@@ -572,8 +671,8 @@ class _ConfirmPageState extends State<ConfirmPage> {
       desc: '"Please enter the kwh value you want to buy"',
       btnCancelOnPress: () {},
       btnOkOnPress: () async {
-        // publish("SPKLU/Intek/Cikunir/Status/AC", "1");
-        _handleButtonPressed();
+        publish("SPKLU/Intek/Cikunir/Status/AC", "1");
+        // _handleButtonPressed();
       },
     );
   }

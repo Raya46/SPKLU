@@ -11,6 +11,7 @@ import 'package:flutter/src/widgets/framework.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:localstorage/localstorage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 // import 'package:google_fonts/google_fonts.dart';
@@ -28,7 +29,6 @@ const Color bg = Color.fromRGBO(240, 239, 244, 1);
 const Color text = Color.fromRGBO(48, 48, 244, 1);
 
 class _Locationpage extends State<LocationPage> {
-  final LocalStorage storage = new LocalStorage('localstorage_app');
   late List _lokasiData = [];
   late String? lengthData;
   bool _isLoading = false;
@@ -41,7 +41,8 @@ class _Locationpage extends State<LocationPage> {
   }
 
   Future<void> _fetchLokasiData() async {
-    final api_token = storage.getItem('api_token');
+    final prefs = await SharedPreferences.getInstance();
+    final api_token = prefs.getString('api_token');
     final response = await http.get(Uri.parse(
         'http://spklu.solusi-rnd.tech/api/data-lokasi?token=$api_token'));
 

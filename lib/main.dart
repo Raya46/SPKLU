@@ -1,16 +1,20 @@
 // ignore_for_file: prefer_const_constructors, duplicate_ignore
 
+import 'package:flutetr_spklu/NavigationPage.dart';
 import 'package:flutetr_spklu/page/Feature/Scanner.dart';
 import 'package:flutetr_spklu/page/LoginPage/LoginPage.dart';
+import 'package:flutetr_spklu/page/Main/DashboardPage.dart';
 import 'package:flutetr_spklu/page/Payment/ChargingInputPage.dart';
-import 'package:flutetr_spklu/page/onBoardingPage/BoardingPage.dart';
-import 'package:flutetr_spklu/tester.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? api_token = prefs.getString('api_token');
+    print("login:" + api_token.toString());
+  runApp(MaterialApp(home: api_token == null ? LoginPage() : NavigationPage()));
 }
 
 class MyApp extends StatefulWidget {

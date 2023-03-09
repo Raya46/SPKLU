@@ -1,3 +1,4 @@
+import 'package:flutetr_spklu/page/Feature/DetailPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/basic.dart';
 import 'package:flutter/src/widgets/container.dart';
@@ -91,12 +92,20 @@ Widget widgetHistory(context) => Column(
                     color: white,
                   ),
                 ),
-                Container(
-                  width: MediaQuery.of(context).size.width / 1.35,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [Text("Top Up kWh"), Text("-Rp 90.312")],
+                InkWell(
+                  onTap: (){
+                    Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => DetailPage(nominalKwh: '',)),
+                    );
+                  },
+                  child: Container(
+                    width: MediaQuery.of(context).size.width / 1.35,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [Text("Top Up kWh"), Text("-Rp 90.312")],
+                    ),
                   ),
                 ),
               ],

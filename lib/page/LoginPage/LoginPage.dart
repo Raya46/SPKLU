@@ -5,9 +5,9 @@ import 'dart:convert';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../NavigationPage.dart';
 import 'package:http/http.dart' as http;
-import 'package:localstorage/localstorage.dart';
 
 void main() {
   runApp(LoginPage());
@@ -33,7 +33,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final LocalStorage storage = new LocalStorage('localstorage_app');
   final _formKey = GlobalKey<FormState>();
   String? _email, _password;
 
@@ -221,9 +220,10 @@ class _LoginScreenState extends State<LoginScreen> {
         print(response.body);
         if (results["success"] == true) {
           if (results["user"]["active"] == "1") {
-            storage.setItem('id', results["user"]["id"]);
-            storage.setItem('api_token', results["user"]["api_token"]);
-            // ignore: use_build_context_synchronously
+            final prefs = await SharedPreferences.getInstance();
+            prefs.setString('api_token', results['user']['api_token']);
+            prefs.setInt('id', results['user']['id']);
+            print(prefs.setString('api_token', results['user']['api_token']));
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) {
